@@ -135,7 +135,6 @@ function selectSit(event) {
     // Add the seat to the selection and check continuity with existing seats
     const selectedCols = currentGroup.selectedSeats.map(s => s.col);
     selectedCols.push(sit.col);
-
     // Sort the selected seats by their column
     selectedCols.sort((a, b) => a - b);
 
@@ -203,7 +202,6 @@ function isSelectionContinuous(selectedSeats) {
 }
 
 function applyRowOpacity() {
-
     const rows = document.getElementsByClassName('row');
     // Check if any seat is selected in the row
     for (let row of rows) {
@@ -261,7 +259,7 @@ function startNewGroup() {
         return;
     }
 
-    const groupId = prompt('Enter a new group ID:');
+    const groupId = prompt('Novi ID grupe (IME):');
     if (!groupId || groupId.trim() === '') {
       showTooltip('Ime grupe obavezno!');
       return;
@@ -411,9 +409,9 @@ function getSeatPrice(row) {
 
 function updateGroupInfo() {
     if (currentGroup) {
-        document.getElementById('groupInfo').innerText = `Group ${currentGroup.id} is selecting seats.`;
+        document.getElementById('groupInfo').innerText = `Grupa ${currentGroup.id} bira sedista.`;
     } else {
-        document.getElementById('groupInfo').innerText = `No group is currently selecting seats.`;
+        document.getElementById('groupInfo').innerText = `Nema aktivne grupe.`;
     }
 }
 
@@ -464,12 +462,12 @@ function updateGroupStatistics() {
     });
 }
 
-let colors = ['#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#734444', '#5da7ae']; // Red, Blue, Green
+let colors = ['#645986' ,'#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#5da7ae','#02C3BD', '#FF8C61' ]; // Red, Blue, Green
 
 function getRandomColor() {
     if (colors.length === 0) {
         // Reset the array if all colors have been used
-        colors = ['#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#734444' , '#5da7ae'];
+        colors = ['#645986', '#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#5da7ae','#02C3BD', '#FF8C61'];
     }
 
     // Get a random index from the remaining colors array
@@ -498,7 +496,7 @@ function noMoreGroups() {
     showTooltip('Nema vise grupa! Ostala sedista su zauzeta.');
     // Grab all remaining unselected seats
     grabRemainingSeats();
-
+    document.getElementById('groupInfo').innerText = `Nema vise grupa!`;
    
 }
 function grabRemainingSeats() {
