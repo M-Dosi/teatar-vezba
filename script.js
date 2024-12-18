@@ -2,9 +2,9 @@
 let sitsArray = [];
 let x, y;
 let currentGroup = null;
-let groupsEnabled = true; // Flag to control whether groups can still be created
+let groupsEnabled = true; // moze da se kreiraju grupe
 let groups = [];
-let selectedRow = null;  // To store the first row selected by the group
+let selectedRow = null;  // prvi red selektovan za grupu
 
 function init() {
     const sitsNumber = getSits();
@@ -16,7 +16,7 @@ function init() {
     else{
     createSits(x, y);
 }
- 
+
 }
 
 init();
@@ -30,6 +30,7 @@ function getSits() {
 }
 
 function createSits(x, y) {
+
     for (let i = 1; i < x + 1; i++) {
         const row = document.createElement('div');
         row.className = 'row';
@@ -60,13 +61,14 @@ function createSit(row, col) {
         row: row,
         col: col,
         price: getSeatPrice(row),
-        group: undefined,  // Track group that has reserved this seat
-        reserved: false,   // True if seat is reserved
-        selected: false,   // True if seat is selected by the group
-        available: true,   // True if seat is available
-        tampone: false     // True if seat is part of a tampone zone
+        group: undefined,  // grupa 
+        reserved: false,   // True if rezervisano
+        selected: false,   // True if selected by group
+        available: true,   // True if aviable
+        tampone: false     // True if tampon zona
     };
     return sit;
+    
 }
 
 function selectSit(event) {
@@ -79,153 +81,132 @@ function selectSit(event) {
 
     const sitId = event.currentTarget.id;
     const selectedSit = event.currentTarget;
-    const [row, col] = sitId.split('-').map(Number);  // Ensure row and col are numbers
+    const [row, col] = sitId.split('-').map(Number);  // da su brojke
     const sit = sitsArray.find(sit => sit.row === row && sit.col === col);
 
-    // If the seat is reserved by another group or part of the tampone zone, prevent selection
+    // If  reserved by another group ili deo tampone zone, spreci selection
     if (sit.reserved && sit.group !== currentGroup.id) {
         showTooltip('Ovo sediste je zauzeto od strane druge grupe!');
         return;
     }
 
-    // Mark the first selected seat's row for the group
+    // red mark za prvo sediste
     if (!selectedRow) {
         selectedRow = sit.row;
-        applyRowOpacity(); // Apply opacity to all other rows
+        applyRowOpacity(); // Apply opacity
     }
 
-    // Ensure selection is within the same row and continuous if it's not an undo move
+    // isti red i kontinuitet ako nije undo
     if (sit.row !== selectedRow) {
         showTooltip('Samo sediste iz istog reda moze biti izabrano!');
         return;
     }
 
-    // Handle deselection (undo) case: If the seat was previously selected, remove it
+    //  deselection (undo) case: If the seat was previously selected, remove it
     if (sit.selected) {
-        // Check if deselecting the seat would break continuity
+        // sedista u kontinuitetu
         const remainingSelectedSeats = currentGroup.selectedSeats.filter(s => s !== sit);
 
-        // Check if the remaining seats are continuous
+        // ostala sedista u kontonuitetu check
         if (!isSelectionContinuous(remainingSelectedSeats)) {
             showTooltip('Deselektovanje ovog sedista lomi kontinuitet reda!');
-            return; // Prevent deselection if it breaks continuity
+            return; // spreci deselekciju ako se kosi sa kontinitetom
         }
 
-        // Proceed with deselection
+        // Deselekcija
         sit.selected = false;
         selectedSit.classList.remove('selected');
-        selectedSit.style.backgroundColor = '';  // Remove the background color
+        selectedSit.style.backgroundColor = '';  // skini background color
         sit.group = undefined;
         sit.reserved = false;
 
         currentGroup.selectedSeats = remainingSelectedSeats;
 
-        // If there are no more selected seats in the row, reset the row opacity and allow other rows to be selected
+        // ako nema selected seats u redu, reset row opacity i dozvoli selekciju drugog reda
         if (currentGroup.selectedSeats.filter(s => s.row === sit.row).length === 0) {
-            selectedRow = null;  // Allow for row change
+            selectedRow = null;  // dozvoli promenu reda
             applyRowOpacity();   // Update row opacity to 1 for all rows
         }
 
         updateStatistics();
-        return; // Exit early to allow undo without checking for gaps
+        return; // exit rano da dozvoli undo bez provere praznih mesta
     }
 
     // Now, we handle the case of a new selection or after deselection (valid undo).
 
-    // Add the seat to the selection and check continuity with existing seats
+    // add seat u selekciju
     const selectedCols = currentGroup.selectedSeats.map(s => s.col);
     selectedCols.push(sit.col);
-    // Sort the selected seats by their column
+    // sort po col za seat
     selectedCols.sort((a, b) => a - b);
-
-    // Check for continuity: no gaps allowed
+    // check continuitet NO gaps
     for (let i = 0; i < selectedCols.length - 1; i++) {
         if (selectedCols[i] + 1 !== selectedCols[i + 1]) {
             showTooltip('Sedista moraju biti izabrana u kontinutietu bez praznih mesta izmedju!');
             return;
         }
     }
-
-    // If continuity is preserved, proceed with the selection
+    // continuitet sacuvan, nastai sa selekcijom
     sit.selected = true;
     selectedSit.classList.add('selected');
-    selectedSit.style.backgroundColor = currentGroup.color;  // Apply group color
+    selectedSit.style.backgroundColor = currentGroup.color;  // boja
     sit.group = currentGroup.id;
     sit.reserved = true;
 
     currentGroup.selectedSeats.push(sit);
 
     updateStatistics();
-    applyRowOpacity(); // Reapply row opacity after selection
+    applyRowOpacity(); // reaply opacity
 }
-
-// Check if the selected seats are continuous (no gaps)
+// sedista (no gaps) check
 function isSelectionContinuous(selectedSeats) {
     if (selectedSeats.length < 2) {
-        return true;  // A single seat is always considered continuous
+        return true;  // slucaj za 1 sediste
     }
-
-    // Sort the selected seats by column to check continuity
+    // check za col
     selectedSeats.sort((a, b) => a.col - b.col);
-
+    // check levo - desno
     for (let i = 0; i < selectedSeats.length - 1; i++) {
         const current = selectedSeats[i];
         const next = selectedSeats[i + 1];
         if (next.col !== current.col + 1) {
-            return false;  // If the columns are not adjacent, it's not continuous
+            return false;  // false ako nisu 1 do drugog
         }
     }
 
     return true;
 }
-
-
-
-// Check if the selected seats are continuous (no gaps)
-function isSelectionContinuous(selectedSeats) {
-    if (selectedSeats.length < 2) {
-        return true;  // A single seat is always considered continuous
-    }
-
-    // Sort the selected seats by column to check continuity
-    selectedSeats.sort((a, b) => a.col - b.col);
-    // Now check if the seats are continuous from left to right
-    for (let i = 0; i < selectedSeats.length - 1; i++) {
-        const current = selectedSeats[i];
-        const next = selectedSeats[i + 1];
-        if (next.col !== current.col + 1) {
-            return false;  // If the columns are not adjacent, it's not continuous
-        }
-    }
-
-    return true;
-}
-
+// opacity za red
 function applyRowOpacity() {
     const rows = document.getElementsByClassName('row');
-    // Check if any seat is selected in the row
+    // bilo koje sediste selektovano
     for (let row of rows) {
-        row.style.opacity = 1;  // Reset opacity to 1 for all rows by default
+        row.style.opacity = 1;  // reset 1 za sve redove
     }
-    // Check if any seat is selected in the row
+    if (currentGroup && currentGroup.selectedSeats){ //reset na 1
+    // bilo koje sediste selektovano
     for (let row of rows) {
         const rowId = parseInt(row.id.split('-')[1]);
-        const isSelectedInRow = currentGroup.selectedSeats.some(s => s.row === rowId); // Check if any seat is selected in this row
-
-        // If no seat is selected in the row, reset opacity for this row and set others to 0.6
+        let isSelectedInRow = false; // initialize isSelectedInRow to false
+        // const isSelectedInRow = currentGroup.selectedSeats.some(s => s.row === rowId); // ovaj sed
+        if (currentGroup && currentGroup.selectedSeats) {
+            isSelectedInRow = currentGroup.selectedSeats.some(s => s.row === rowId); // ovaj sed
+        }
+        // ako nema selektovano u redu ostali to 0.6 ovaj 1
         if (isSelectedInRow) {
-            row.style.opacity = 1; // Keep the selected row with opacity 1
+            row.style.opacity = 1; // selektovani red opacity 1
         } else {
-            row.style.opacity = 0.6; // Set other rows to opacity 0.6
+            row.style.opacity = 0.6; // ostali 0.6
         }
     }
 
     // If no rows are selected, reset opacity for all rows to 1 (allowing all rows to be selected)
-    if (currentGroup.selectedSeats.length === 0) {
+    if (currentGroup && currentGroup.selectedSeats && currentGroup.selectedSeats.length === 0) {
         for (let row of rows) {
             row.style.opacity = 1; // Reset all rows' opacity to 1
         }
     }
+}
 }
 
 
@@ -240,14 +221,12 @@ function finishGroupSelection() {
     document.getElementById('noMoreGroupsButton').disabled = false;
 
     showTooltip(`Grupa ${currentGroup.id} zavrsila biranje.`);
-
-    // Apply the tampone zone around selected seats after finishing
+    // tampon zona dodeli
     currentGroup.selectedSeats.forEach(sit => applyTamponeZone(sit));
-
-    // Reset the current group and row state
+    // Reset za state
     currentGroup = null;
     selectedRow = null;
-    // Reset all rows opacity to 1 after finishing selection
+    // Reset opaciti za sve redove posle finishing selection
     applyRowOpacity();
     updateGroupInfo();
 }
@@ -258,7 +237,7 @@ function startNewGroup() {
         showTooltip('Nema vise grupa!');
         return;
     }
-
+  
     const groupId = prompt('Novi ID grupe (IME):');
     if (!groupId || groupId.trim() === '') {
       showTooltip('Ime grupe obavezno!');
@@ -268,74 +247,53 @@ function startNewGroup() {
       showTooltip('Ime grupe vec postoji!');
       return;
     }
-
-
-
-
-    const groupColor = getRandomColor(); // Assign a unique color for the group
+    const groupColor = getRandomColor(); // boja za grupu (nije skroz random, ima lista)
     currentGroup = {
         id: groupId,
         selectedSeats: [],
         color: groupColor,
     };
-    groups.push(currentGroup);
 
-   
-    showTooltip(`Grupa ${groupId} sada bira sedista!`);
-    updateGroupInfo();
-
-    // Enable/Disable buttons based on the current state
-    // document.getElementById('startButton').style.display = 'none'; // Hide the button in the HTML
-    // document.getElementById('finishButton').style.display = 'inline'; // Show the button in the HTML
-    // document.getElementById('noMoreGroupsButton').style.display = 'none';
     document.getElementById('startButton').disabled = true;
     document.getElementById('finishButton').disabled = false;
     document.getElementById('noMoreGroupsButton').disabled = true;
-
-
-
-
+    updateGroupInfo();
+    groups.push(currentGroup);
+    showTooltip(`Grupa ${groupId} sada bira sedista!`);
+    
 }
+// tampon zona check i mark
 function applyTamponeZone(sit) {
     const row = sit.row;
     const col = sit.col;
 
-    // Check for adjacent seats to mark as tampone (buffer zone)
+    // sedista pored svi pravci (buffer zone)
     const adjacentSeats = [
-        { row: row - 1, col: col }, // Seat above
-        { row: row + 1, col: col }, // Seat below
-        { row: row, col: col - 1 }, // Seat left
-        { row: row, col: col + 1 },  // Seat right
+        { row: row - 1, col: col }, // iznad
+        { row: row + 1, col: col }, // ispod
+        { row: row, col: col - 1 }, // levo
+        { row: row, col: col + 1 },  // desno
 
         { row: row - 1, col: col - 1 }, // gore levo
         { row: row - 1, col: col + 1 }, // gore desno
-        { row: row + 1, col: col - 1 }, // dolje levo
+        { row: row + 1, col: col - 1 }, // dole levo
         { row: row + 1, col: col + 1 } // dole desno
     ];
-
+// provera
     adjacentSeats.forEach(({ row, col }) => {
         if (row > 0 && row <= x && col > 0 && col <= y) {
             const adjacentSit = sitsArray.find(s => s.row === row && s.col === col);
             if (adjacentSit && !adjacentSit.selected && !adjacentSit.reserved) {
                 const sitElement = document.getElementById(`${row}-${col}`);
-                sitElement.classList.add('tampone');  // Add tampone class for the buffer zone
-                adjacentSit.tampone = true;  // Mark it as part of the tampone zone
+                sitElement.classList.add('tampone');  // buffer zona
+                adjacentSit.tampone = true;  // obelezi kao tampon zonu
 
-                // Mark this tampone seat as reserved for the next group
+                // obelezi rezervisano za sledecu grupu
                 adjacentSit.reserved = true;
             }
         }
     });
 }
-
-
-
-
-
-
-
-
-
 
 // cena u odnosu na red (poziciju)
 function getSeatPrice(row) {
@@ -343,13 +301,13 @@ function getSeatPrice(row) {
     const midRow = Math.ceil(totalRows / 2); 
   
     if (row === 1 || row === totalRows) {
-        return 300; // First and last rows are always 300
+        return 300; // prvi i poslednji uvek 300
     }
     if (totalRows % 2 === 0) {
     //    parno
 
         if (row === midRow || row === midRow + 1) {
-            return 500; // Two middle rows are priced at 500
+            return 500; // srednji uvek  500 i ovo + 1 je da su dva reda
         }
         const proportion = (500 - 300) / (midRow - 1);
         if (row < midRow) {
@@ -360,9 +318,9 @@ function getSeatPrice(row) {
         }  
     } 
     else {
-        // Odd number of rows
+        // else je neparno
         if (row === midRow) {
-          return 500; // Middle row is priced at 500
+          return 500; // srednji red uvek 500
         }
         const proportion = (500 - 300) / (midRow - 1);
         if (row < midRow) {
@@ -374,39 +332,7 @@ function getSeatPrice(row) {
     }
   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// update group info
 function updateGroupInfo() {
     if (currentGroup) {
         document.getElementById('groupInfo').innerText = `Grupa ${currentGroup.id} bira sedista.`;
@@ -415,18 +341,7 @@ function updateGroupInfo() {
     }
 }
 
-// function updateStatistics() {
-//     const selectedSeatsCount = currentGroup.selectedSeats.length;
-//     const unselectedSeatsCount = sitsArray.length - selectedSeatsCount;
-//     const totalRevenue = currentGroup.selectedSeats.reduce((acc, sit) => acc + sit.price, 0);
-
-//     document.getElementById('totalSeats').innerText = sitsArray.length;
-//     document.getElementById('selectedSeats').innerText = selectedSeatsCount;
-//     document.getElementById('unselectedSeats').innerText = unselectedSeatsCount;
-//     document.getElementById('totalRevenue').innerText = totalRevenue;
-
-//     updateGroupStatistics();
-// }
+// update stat
 function updateStatistics() {
     const totalSeats = sitsArray.length;
     const selectedSeatsCount = sitsArray.filter(sit => sit.selected).length;
@@ -442,8 +357,8 @@ function updateStatistics() {
   }
 function updateGroupStatistics() {
     const tbody = document.querySelector('#groupStatistics tbody');
-    tbody.innerHTML = ''; // Clear current data
-
+    tbody.innerHTML = ''; // cisti trenutno
+ 
     groups.forEach(group => {
         const row = document.createElement('tr');
         const groupName = document.createElement('td');
@@ -451,7 +366,8 @@ function updateGroupStatistics() {
         groupName.innerText = group.id;
         const selectedSeats = document.createElement('td');
         selectedSeats.innerText = group.selectedSeats.length;
-        selectedSeats.style.backgroundColor = group.color; 
+        const percentage = Math.round((group.selectedSeats.length / (x * y)  * 100) );
+        selectedSeats.style.background =  `linear-gradient(90deg, ${group.color} ${percentage}% , transparent 0%)`;
         const revenue = document.createElement('td');
         revenue.style.backgroundColor = group.color; 
         revenue.innerText = group.selectedSeats.reduce((acc, sit) => acc + sit.price, 0);
@@ -462,58 +378,55 @@ function updateGroupStatistics() {
     });
 }
 
+
 let colors = ['#645986' ,'#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#5da7ae','#02C3BD', '#FF8C61' ]; // Red, Blue, Green
 
 function getRandomColor() {
     if (colors.length === 0) {
-        // Reset the array if all colors have been used
+        // Reset za array 
         colors = ['#645986', '#cf4647', '#005689',  '#f96d00', '#6643b5', '#014955', '#5da7ae','#02C3BD', '#FF8C61'];
     }
-
-    // Get a random index from the remaining colors array
+    // random index
     const randomIndex = Math.floor(Math.random() * colors.length);
     const selectedColor = colors[randomIndex];
-
-    // Remove the selected color from the array to avoid repetition
+    // ponavljanje
     colors.splice(randomIndex, 1);
 
     return selectedColor;
 }
 
-
-
-
-
-
 function noMoreGroups() {
     groupsEnabled = false;
-    // document.getElementById('startButton').style.display = 'none';
-    // document.getElementById('finishButton').style.display = 'none';
-    // document.getElementById('noMoreGroupsButton').style.display = 'none';
+    
     document.getElementById('startButton').disabled = true;
     document.getElementById('finishButton').disabled = true;
     document.getElementById('noMoreGroupsButton').disabled = true;
     showTooltip('Nema vise grupa! Ostala sedista su zauzeta.');
-    // Grab all remaining unselected seats
+
     grabRemainingSeats();
     document.getElementById('groupInfo').innerText = `Nema vise grupa!`;
-   
+    document.getElementById('container').className = 'done';
+    document.getElementsByClassName('buttons-wrapper')[0].className = 'buttons-wrapper done';
+    document.getElementsByClassName('screen-wrapper')[0].className = 'screen-wrapper done';
+    document.getElementsByClassName('screen')[0].className = 'screen done';
 }
+
+
 function grabRemainingSeats() {
     sitsArray.forEach(sit => {
         if (!sit.selected && !sit.reserved) {
-            // Mark this seat as grabbed
+            // mark grabbed
             sit.reserved = true;
             const sitElement = document.getElementById(`${sit.row}-${sit.col}`);
-            sitElement.style.backgroundColor = 'gray';  // Change the color to indicate grabbed seat
-            sitElement.classList.add('reserved');  // Optionally, you can add a "reserved" class for styling
+            sitElement.style.backgroundColor = 'gray';  
+            sitElement.classList.add('reserved');  
         }
     });
 
-    // Optionally, update statistics or display a message that all seats are grabbed
+    // update stat
     updateStatistics();
 }
-
+// tooltip "modal"
 function showTooltip(message) {
     // Create a tooltip element
     const tooltip = document.createElement('div');
@@ -531,11 +444,51 @@ function showTooltip(message) {
         }, 300);
     }, 2000);
 }
+const videos = [
+    "https://www.youtube.com/embed/80VTmBAnTSE?autoplay=1&mute=1&loop=1&playlist=80VTmBAnTSE",
+    "https://www.youtube.com/embed/d6R-ZjEgnlo?autoplay=1&mute=1",
+    "https://www.youtube.com/embed/urHvTZWO_70?autoplay=1&mute=1"
+];
 
+let currentIndex = 0;
 
+const iframe = document.getElementById("videoIframe");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
 
+function updateVideo() {
+    iframe.src = videos[currentIndex];
+}
 
+prevBtn.addEventListener("click", () => {
+    if (currentIndex > 0) {
+        currentIndex--;
+    } else {
+        currentIndex = videos.length - 1; // Loop back to last video
+    }
+    updateVideo();
+});
 
+nextBtn.addEventListener("click", () => {
+    if (currentIndex < videos.length - 1) {
+        currentIndex++;
+    } else {
+        currentIndex = 0; // Loop back to first video
+    }
+    updateVideo();
+});
 
-// deselektoivanje kad se pravi grupa unazad baguje 
-// juri pravac reda levo desno od grunog deselekta sledeci nece na drugu stranu bag
+// Initial load
+updateVideo();
+
+// Chek za local storage
+// local storage da se vidi sa nikolom
+if (typeof(Storage) !== "undefined") {
+
+    console.log("Local Storage is supported");
+  
+  } else {
+  
+    console.log("Local Storage is not supported in your browser");
+  
+  }
