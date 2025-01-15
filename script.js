@@ -46,9 +46,11 @@ function createSits(x, y) {
             sitElement.id = i + '-' + j;
             const sitElementPosition = document.createElement('div');
             sitElementPosition.innerText = i + '-' + j;
+            sitElementPosition.className = 'sit-position';
             sitElement.appendChild(sitElementPosition);
             const sitElementPrice = document.createElement('div');
             sitElementPrice.innerText = sit.price;
+            sitElementPrice.className = 'sit-price';
             sitElement.appendChild(sitElementPrice);
             sitElement.addEventListener('click', selectSit);
             row.appendChild(sitElement);
@@ -365,9 +367,11 @@ function updateGroupStatistics() {
         groupName.style.backgroundColor = group.color; 
         groupName.innerText = group.id;
         const selectedSeats = document.createElement('td');
-        selectedSeats.innerText = group.selectedSeats.length;
+        // selectedSeats.innerText = group.selectedSeats.length;
+       
         const percentage = Math.round((group.selectedSeats.length / (x * y)  * 100) );
         selectedSeats.style.background =  `linear-gradient(90deg, ${group.color} ${percentage}% , transparent 0%)`;
+        selectedSeats.textContent = `${group.selectedSeats.length} (${percentage}%)`;
         const revenue = document.createElement('td');
         revenue.style.backgroundColor = group.color; 
         revenue.innerText = group.selectedSeats.reduce((acc, sit) => acc + sit.price, 0);
@@ -397,7 +401,7 @@ function getRandomColor() {
 
 function noMoreGroups() {
     groupsEnabled = false;
-    
+ 
     document.getElementById('startButton').disabled = true;
     document.getElementById('finishButton').disabled = true;
     document.getElementById('noMoreGroupsButton').disabled = true;
@@ -409,6 +413,11 @@ function noMoreGroups() {
     document.getElementsByClassName('buttons-wrapper')[0].className = 'buttons-wrapper done';
     document.getElementsByClassName('screen-wrapper')[0].className = 'screen-wrapper done';
     document.getElementsByClassName('screen')[0].className = 'screen done';
+
+    document.getElementById('toogleSeatNum').disabled = false;
+    document.getElementById('toogleSeatNum').classList.remove('disabled');
+    document.getElementById('toogleSeatPrice').disabled = false;
+    document.getElementById('toogleSeatPrice').classList.remove('disabled');
 }
 
 
@@ -492,3 +501,24 @@ if (typeof(Storage) !== "undefined") {
     console.log("Local Storage is not supported in your browser");
   
   }
+
+
+  function toggleSeatNum() {
+    const sitPositions = document.getElementsByClassName('sit-position'); // Remove the dot (.) before the class name
+    const button = document.getElementById('toggleSeatNum');
+    // Convert HTMLCollection to an array and use forEach
+    Array.from(sitPositions).forEach(sitPosition => {
+        sitPosition.classList.toggle('sit-hidden');
+    });
+    button.classList.toggle('active');
+}
+function toggleSeatPrice() {
+    const sitPositions = document.getElementsByClassName('sit-price'); // Remove the dot (.) before the class name
+  const button = document.getElementById('toggleSeatPrice');
+    // Convert HTMLCollection to an array and use forEach
+    Array.from(sitPositions).forEach(sitPrice => {
+        sitPrice.classList.toggle('sit-hidden');
+    });
+
+    button.classList.toggle('active');
+}

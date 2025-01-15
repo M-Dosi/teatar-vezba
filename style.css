@@ -79,6 +79,13 @@ body {
     padding: 0;
     margin: 0;
 }
+.toggle-wrapper {
+    height: 130px;
+    background: #363636;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 5px;
+}
 .sit {
     min-width: 45px;
     min-height: 45px;
@@ -95,6 +102,11 @@ body {
     font-size: 12px;
     transition: 0.2s ease-in-out;
     border-bottom: 3px solid #818181;
+}
+.sit-hidden {
+    height: 0;
+    transition-duration: 0.5s;
+    transform: scale(0);
 }
 .sit.selected {
     transition: 0.2s ease-in-out;
@@ -182,6 +194,8 @@ button {
     width: 30%;
     border-radius: 3px;
     box-shadow: 3px 3px 22px 0px #0000005c;
+    transition: 0.2s ease-in-out;
+    border: 1px solid transparent;
 }
 button:hover {
     transform: scale(0.99);
@@ -200,6 +214,12 @@ button:disabled:hover {
     filter: blur(2px);
     cursor: not-allowed;
     scale: none;
+}
+button.active {
+    background: #2c2c2c;
+    color: coral;
+    transition: 0.2s ease-in-out;
+    border: 1px solid coral;
 }
 .tables-wrapper {
     background: #363636;
