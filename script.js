@@ -490,17 +490,7 @@ nextBtn.addEventListener("click", () => {
 // Initial load
 updateVideo();
 
-// Chek za local storage
-// local storage da se vidi sa nikolom
-if (typeof(Storage) !== "undefined") {
 
-    console.log("Local Storage is supported");
-  
-  } else {
-  
-    console.log("Local Storage is not supported in your browser");
-  
-  }
 
 
   function toggleSeatNum() {
@@ -522,3 +512,24 @@ function toggleSeatPrice() {
 
     button.classList.toggle('active');
 }
+
+
+
+window.onload = function() {
+    storeDataToLocalStorage();
+    retreveDataFromLocalStorage();
+}
+
+function storeDataToLocalStorage() {
+    
+    // Store the values of x and y in local storage
+    localStorage.setItem('x', x.toString());
+    localStorage.setItem('y', y.toString());
+}
+
+  function retreveDataFromLocalStorage() {
+    // Retrieve the values of x and y from local storage
+    const storedX = localStorage.getItem('x');
+    const storedY = localStorage.getItem('y');
+
+  }
